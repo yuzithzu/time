@@ -15,29 +15,18 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       text-align: center;
     }
-
     #store-status {
       font-size: 22px;
       font-weight: 600;
       margin-bottom: 10px;
     }
-
     #countdown {
       font-size: 16px;
       color: #666;
     }
-
-    .open {
-      color: #28a745;
-    }
-
-    .closed {
-      color: #dc3545;
-    }
-
-    .soon {
-      color: #ffc107;
-    }
+    .open { color: #28a745; }
+    .closed { color: #dc3545; }
+    .soon { color: #ffc107; }
   </style>
 </head>
 <body>
@@ -55,18 +44,22 @@
 
       const nowMs = now.getTime();
       const time = (h, m = 0) => new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0).getTime();
-
       const hrs = n => Math.floor(n / (1000 * 60 * 60));
       const mins = n => Math.floor((n % (1000 * 60 * 60)) / (1000 * 60));
       const secs = n => Math.floor((n % (1000 * 60)) / 1000);
 
+      // Sunday
       if (day === 0) {
+        const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 8, 0, 0);
+        const nextDiff = nextOpen.getTime() - nowMs;
+
         statusEl.innerHTML = "&#10060; Closed today – Sunday (No operation)";
         statusEl.className = "closed";
-        countdownEl.textContent = "";
+        countdownEl.textContent = `Reopening on Monday at 8:00 AM in: ${hrs(nextDiff)}h ${mins(nextDiff)}m ${secs(nextDiff)}s`;
         return;
       }
 
+      // Monday to Friday
       if (day >= 1 && day <= 5) {
         const openMorning = time(8, 0);
         const cutOffAMStart = time(11, 0);
@@ -80,7 +73,7 @@
 
         if (nowMs >= cutOffAMStart && nowMs < lunchStart) {
           const untilLunch = lunchStart - nowMs;
-          statusEl.innerHTML = "&#9940; Cut-off period – Limited acceptance (11AM–12PM)";
+          statusEl.innerHTML = "&#9940; Cut-off period – Limited acceptance (11:00–12:00 PM)";
           statusEl.className = "soon";
           countdownEl.textContent = `Lunch break starts in: ${hrs(untilLunch)}h ${mins(untilLunch)}m ${secs(untilLunch)}s`;
           return;
@@ -142,6 +135,7 @@
         return;
       }
 
+      // Saturday
       if (day === 6) {
         const openStart = time(8, 0);
         const openEnd = time(11, 0);
@@ -151,7 +145,7 @@
         const noon = time(12, 0);
 
         if (nowMs >= openStart && nowMs < openEnd) {
-          const untilCutOff = openEnd - nowMs;
+          const untilCutOff = cutOffStart - nowMs;
           statusEl.innerHTML = "&#9989; Operation is OPEN (Saturday)";
           statusEl.className = "open";
           countdownEl.textContent = `Cut-off starts in: ${hrs(untilCutOff)}h ${mins(untilCutOff)}m ${secs(untilCutOff)}s`;
@@ -159,10 +153,10 @@
         }
 
         if (nowMs >= cutOffStart && nowMs < cutOffEnd) {
-          const untilClosed = cutOffEnd - nowMs;
+          const untilClose = cutOffEnd - nowMs;
           statusEl.innerHTML = "&#9940; Cut-off period – Limited acceptance (11:00–11:30 AM)";
           statusEl.className = "soon";
-          countdownEl.textContent = `Closing soon in: ${hrs(untilClosed)}h ${mins(untilClosed)}m ${secs(untilClosed)}s`;
+          countdownEl.textContent = `Closing in: ${hrs(untilClose)}h ${mins(untilClose)}m ${secs(untilClose)}s`;
           return;
         }
 
@@ -182,14 +176,15 @@
           return;
         }
 
-        // After 12:00 NN
+        // After 12:00 NN Saturday
         const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 8, 0, 0);
         const nextDiff = nextOpen.getTime() - nowMs;
         statusEl.innerHTML = "&#10060; Operation is CLOSED for the weekend";
         statusEl.className = "closed";
-        countdownEl.textContent = `Reopening on Monday: ${hrs(nextDiff)}h ${mins(nextDiff)}m ${secs(nextDiff)}s`;
+        countdownEl.textContent = `Reopening on Monday at 8:00 AM in: ${hrs(nextDiff)}h ${mins(nextDiff)}m ${secs(nextDiff)}s`;
         return;
       }
+    }
 
     updateStoreStatus();
     setInterval(updateStoreStatus, 1000);
