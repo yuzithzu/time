@@ -27,14 +27,22 @@
       color: #666;
     }
 
-    .open { color: #28a745; }
-    .closed { color: #dc3545; }
-    .soon { color: #ffc107; }
+    .open {
+      color: #28a745;
+    }
+
+    .closed {
+      color: #dc3545;
+    }
+
+    .soon {
+      color: #ffc107;
+    }
   </style>
 </head>
 <body>
   <div id="store-widget">
-    <div id="store-status"></div>
+    <div id="store-status" class=""></div>
     <div id="countdown"></div>
   </div>
 
@@ -42,138 +50,125 @@
     function updateStoreStatus() {
       const now = new Date();
       const day = now.getDay();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
       const statusEl = document.getElementById("store-status");
       const countdownEl = document.getElementById("countdown");
 
-      const ms = now.getTime();
-      const time = (h, m = 0) => new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m).getTime();
+      const nowMs = now.getTime();
+      const time = (h, m = 0) => new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0).getTime();
+
       const hrs = n => Math.floor(n / (1000 * 60 * 60));
       const mins = n => Math.floor((n % (1000 * 60 * 60)) / (1000 * 60));
       const secs = n => Math.floor((n % (1000 * 60)) / 1000);
 
-      // Sunday
       if (day === 0) {
-        const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 8, 0);
-        const diff = nextOpen.getTime() - ms;
         statusEl.innerHTML = "&#10060; Closed today – Sunday (No operation)";
         statusEl.className = "closed";
-        countdownEl.innerHTML = `Reopening Monday at 8:00 AM in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
+        countdownEl.textContent = "";
         return;
       }
 
-      // Saturday
-      if (day === 6) {
-        const open = time(8, 0);
-        const cutoff = time(11, 0);
-        const cutoffEnd = time(11, 30);
-        const closedStart = time(11, 31);
-        const noon = time(12, 0);
-
-        if (ms < open) {
-          const diff = open - ms;
-          statusEl.innerHTML = "&#128308; Operation is still CLOSED";
-          statusEl.className = "closed";
-          countdownEl.innerHTML = `Opening at 8:00 AM in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
-          return;
-        }
-
-        if (ms >= open && ms < cutoff) {
-          const diff = cutoff - ms;
-          statusEl.innerHTML = "&#9989; Operation is OPEN (Saturday)";
-          statusEl.className = "open";
-          countdownEl.innerHTML = `Cut-off starts in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
-          return;
-        }
-
-        if (ms >= cutoff && ms < cutoffEnd) {
-          const diff = cutoffEnd - ms;
-          statusEl.innerHTML = "&#9940; Cut-off period – Limited acceptance (11:00–11:30 AM)";
-          statusEl.className = "soon";
-          countdownEl.innerHTML = `Closing soon in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
-          return;
-        }
-
-        if (ms >= closedStart && ms < noon) {
-          const diff = noon - ms;
-          statusEl.innerHTML = "&#10060; Closed – After cut-off (11:31–12:00 NN)";
-          statusEl.className = "closed";
-          countdownEl.innerHTML = `Closed for weekend in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
-          return;
-        }
-
-        const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 8, 0);
-        const diff = nextOpen.getTime() - ms;
-        statusEl.innerHTML = "&#10060; Operation is CLOSED for the weekend";
-        statusEl.className = "closed";
-        countdownEl.innerHTML = `Reopening Monday at 8:00 AM in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
-        return;
-      }
-
-      // Monday to Friday
       if (day >= 1 && day <= 5) {
-        const open1 = time(8, 0);
-        const cutoffAM = time(11, 0);
+        const openMorning = time(8, 0);
+        const cutOffAMStart = time(11, 0);
         const lunchStart = time(12, 1);
         const lunchEnd = time(13, 1);
-        const open2 = time(13, 1);
-        const cutoffPM = time(16, 1);
-        const closePM = time(17, 0);
+        const openAfternoon = time(13, 1);
+        const cutOffPMStart = time(16, 1);
+        const cutOffPMEnd = time(16, 50);
+        const finalCloseStart = time(16, 51);
+        const finalCloseEnd = time(17, 0);
 
-        if (ms < open1) {
-          const diff = open1 - ms;
-          statusEl.innerHTML = "&#128308; Operation is still CLOSED";
-          statusEl.className = "closed";
-          countdownEl.innerHTML = `Opening at 8:00 AM in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
+        if (nowMs >= cutOffAMStart && nowMs < lunchStart) {
+          const untilLunch = lunchStart - nowMs;
+          statusEl.innerHTML = "&#9940; Cut-off period – Limited acceptance (11AM–12PM)";
+          statusEl.className = "soon";
+          countdownEl.textContent = `Lunch break starts in: ${hrs(untilLunch)}h ${mins(untilLunch)}m ${secs(untilLunch)}s`;
           return;
         }
 
-        if (ms >= open1 && ms < cutoffAM) {
-          const diff = cutoffAM - ms;
+        if (nowMs >= lunchStart && nowMs < lunchEnd) {
+          const resumeIn = lunchEnd - nowMs;
+          statusEl.innerHTML = "&#128308; Closed – Lunch break (12:01 PM to 1:00 PM)";
+          statusEl.className = "closed";
+          countdownEl.textContent = `Resuming at 1:01 PM in: ${hrs(resumeIn)}h ${mins(resumeIn)}m ${secs(resumeIn)}s`;
+          return;
+        }
+
+        if (nowMs >= cutOffPMStart && nowMs <= cutOffPMEnd) {
+          const endCutoff = cutOffPMEnd - nowMs;
+          statusEl.innerHTML = "&#9940; Cut-off period – Limited acceptance (4:01–4:50 PM)";
+          statusEl.className = "soon";
+          countdownEl.textContent = `Full closure in: ${hrs(endCutoff)}h ${mins(endCutoff)}m ${secs(endCutoff)}s`;
+          return;
+        }
+
+        if (nowMs >= finalCloseStart && nowMs < finalCloseEnd) {
+          const endClose = finalCloseEnd - nowMs;
+          statusEl.innerHTML = "&#10060; Fully closed for the day (After cut-off)";
+          statusEl.className = "closed";
+          countdownEl.textContent = `Until tomorrow: ${hrs(endClose)}h ${mins(endClose)}m ${secs(endClose)}s`;
+          return;
+        }
+
+        if (nowMs >= openMorning && nowMs < cutOffAMStart) {
+          const untilCutoff = cutOffAMStart - nowMs;
           statusEl.innerHTML = "&#9989; Operation is OPEN";
           statusEl.className = "open";
-          countdownEl.innerHTML = `Cut-off starts in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
+          countdownEl.textContent = `Cut-off starts in: ${hrs(untilCutoff)}h ${mins(untilCutoff)}m ${secs(untilCutoff)}s`;
           return;
         }
 
-        if (ms >= cutoffAM && ms < lunchStart) {
-          const diff = lunchStart - ms;
-          statusEl.innerHTML = "&#9940; Cut-off period – Limited acceptance (11:00–12:00 PM)";
-          statusEl.className = "soon";
-          countdownEl.innerHTML = `Lunch starts in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
-          return;
-        }
-
-        if (ms >= lunchStart && ms < lunchEnd) {
-          const diff = lunchEnd - ms;
-          statusEl.innerHTML = "&#10060; Lunch Break (12:01–1:00 PM)";
-          statusEl.className = "closed";
-          countdownEl.innerHTML = `Resumes at 1:01 PM in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
-          return;
-        }
-
-        if (ms >= open2 && ms < cutoffPM) {
-          const diff = cutoffPM - ms;
+        if (nowMs >= openAfternoon && nowMs <= time(16, 0)) {
+          const untilCutoff = cutOffPMStart - nowMs;
           statusEl.innerHTML = "&#9989; Operation is OPEN";
           statusEl.className = "open";
-          countdownEl.innerHTML = `Cut-off starts in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
+          countdownEl.textContent = `Cut-off starts in: ${hrs(untilCutoff)}h ${mins(untilCutoff)}m ${secs(untilCutoff)}s`;
           return;
         }
 
-        if (ms >= cutoffPM && ms < closePM) {
-          const diff = closePM - ms;
-          statusEl.innerHTML = "&#9940; Cut-off period – Limited acceptance (4:01–5:00 PM)";
-          statusEl.className = "soon";
-          countdownEl.innerHTML = `Closing soon in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
+        if (nowMs < openMorning) {
+          const diffOpen = openMorning - nowMs;
+          statusEl.innerHTML = diffOpen <= 30 * 60 * 1000 ? "&#128285; Opening soon..." : "&#128308; Operation is still CLOSED";
+          statusEl.className = diffOpen <= 30 * 60 * 1000 ? "soon" : "closed";
+          countdownEl.textContent = `Opening in: ${hrs(diffOpen)}h ${mins(diffOpen)}m ${secs(diffOpen)}s`;
           return;
         }
 
-        const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 8, 0);
-        const diff = nextOpen.getTime() - ms;
-        statusEl.innerHTML = "&#10060; Operation is CLOSED for the day";
+        const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 8, 0, 0);
+        const nextDiff = nextOpen.getTime() - nowMs;
+        statusEl.innerHTML = "&#128308; Operation is CLOSED for the day";
         statusEl.className = "closed";
-        countdownEl.innerHTML = `Reopening tomorrow at 8:00 AM in: ${hrs(diff)}h ${mins(diff)}m ${secs(diff)}s`;
+        countdownEl.textContent = `Reopening in: ${hrs(nextDiff)}h ${mins(nextDiff)}m ${secs(nextDiff)}s`;
+        return;
+      }
+
+      if (day === 6) {
+        const cutOffStart = time(8, 0);
+        const cutOffEnd = time(11, 0);
+        const closedStart = time(11, 1);
+        const closedEnd = time(12, 0);
+
+        if (nowMs >= cutOffStart && nowMs < cutOffEnd) {
+          const untilClose = cutOffEnd - nowMs;
+          statusEl.innerHTML = "&#9940; Cut-off period (Saturday 8:00 – 11:00 AM)";
+          statusEl.className = "soon";
+          countdownEl.textContent = `Closing at 11:00 AM in: ${hrs(untilClose)}h ${mins(untilClose)}m ${secs(untilClose)}s`;
+          return;
+        }
+
+        if (nowMs >= closedStart && nowMs < closedEnd) {
+          const untilClosedEnd = closedEnd - nowMs;
+          statusEl.innerHTML = "&#10060; Closed – After cut-off (Saturday)";
+          statusEl.className = "closed";
+          countdownEl.textContent = `Closed for the weekend in: ${hrs(untilClosedEnd)}h ${mins(untilClosedEnd)}m ${secs(untilClosedEnd)}s`;
+          return;
+        }
+
+        const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 8, 0, 0);
+        const nextDiff = nextOpen.getTime() - nowMs;
+        statusEl.innerHTML = "&#128308; Operation is CLOSED for the weekend";
+        statusEl.className = "closed";
+        countdownEl.textContent = `Reopening on Monday: ${hrs(nextDiff)}h ${mins(nextDiff)}m ${secs(nextDiff)}s`;
         return;
       }
     }
