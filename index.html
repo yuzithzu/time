@@ -145,12 +145,32 @@
       if (day === 6) {
         const openStart = time(8, 0);
         const openEnd = time(11, 0);
+        const cutOffStart = time(11, 0);
+        const cutOffEnd = time(11, 30);
+        const closedStart = time(11, 31);
+        const noon = time(12, 0);
 
         if (nowMs >= openStart && nowMs < openEnd) {
-          const untilClose = openEnd - nowMs;
+          const untilCutOff = openEnd - nowMs;
           statusEl.innerHTML = "&#9989; Operation is OPEN (Saturday)";
           statusEl.className = "open";
-          countdownEl.textContent = `Closing at 11:00 AM in: ${hrs(untilClose)}h ${mins(untilClose)}m ${secs(untilClose)}s`;
+          countdownEl.textContent = `Cut-off starts in: ${hrs(untilCutOff)}h ${mins(untilCutOff)}m ${secs(untilCutOff)}s`;
+          return;
+        }
+
+        if (nowMs >= cutOffStart && nowMs < cutOffEnd) {
+          const untilClosed = cutOffEnd - nowMs;
+          statusEl.innerHTML = "&#9940; Cut-off period – Limited acceptance (11:00–11:30 AM)";
+          statusEl.className = "soon";
+          countdownEl.textContent = `Closing soon in: ${hrs(untilClosed)}h ${mins(untilClosed)}m ${secs(untilClosed)}s`;
+          return;
+        }
+
+        if (nowMs >= closedStart && nowMs < noon) {
+          const untilWeekend = noon - nowMs;
+          statusEl.innerHTML = "&#10060; Closed – After cut-off (11:31–12:00 NN)";
+          statusEl.className = "closed";
+          countdownEl.textContent = `Closed for the weekend in: ${hrs(untilWeekend)}h ${mins(untilWeekend)}m ${secs(untilWeekend)}s`;
           return;
         }
 
@@ -162,7 +182,7 @@
           return;
         }
 
-        // After 11:00 AM
+        // After 12:00 NN
         const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 8, 0, 0);
         const nextDiff = nextOpen.getTime() - nowMs;
         statusEl.innerHTML = "&#10060; Operation is CLOSED for the weekend";
