@@ -143,35 +143,33 @@
       }
 
       if (day === 6) {
-        const cutOffStart = time(8, 0);
-        const cutOffEnd = time(11, 0);
-        const closedStart = time(11, 1);
-        const closedEnd = time(12, 0);
+        const openStart = time(8, 0);
+        const openEnd = time(11, 0);
 
-        if (nowMs >= cutOffStart && nowMs < cutOffEnd) {
-          const untilClose = cutOffEnd - nowMs;
-          statusEl.innerHTML = "&#9940; Cut-off period (Saturday 8:00 – 11:00 AM)";
-          statusEl.className = "soon";
+        if (nowMs >= openStart && nowMs < openEnd) {
+          const untilClose = openEnd - nowMs;
+          statusEl.innerHTML = "&#9989; Operation is OPEN (Saturday)";
+          statusEl.className = "open";
           countdownEl.textContent = `Closing at 11:00 AM in: ${hrs(untilClose)}h ${mins(untilClose)}m ${secs(untilClose)}s`;
           return;
         }
 
-        if (nowMs >= closedStart && nowMs < closedEnd) {
-          const untilClosedEnd = closedEnd - nowMs;
-          statusEl.innerHTML = "&#10060; Closed – After cut-off (Saturday)";
+        if (nowMs < openStart) {
+          const untilOpen = openStart - nowMs;
+          statusEl.innerHTML = "&#128308; Operation is still CLOSED";
           statusEl.className = "closed";
-          countdownEl.textContent = `Closed for the weekend in: ${hrs(untilClosedEnd)}h ${mins(untilClosedEnd)}m ${secs(untilClosedEnd)}s`;
+          countdownEl.textContent = `Opening at 8:00 AM in: ${hrs(untilOpen)}h ${mins(untilOpen)}m ${secs(untilOpen)}s`;
           return;
         }
 
+        // After 11:00 AM
         const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 8, 0, 0);
         const nextDiff = nextOpen.getTime() - nowMs;
-        statusEl.innerHTML = "&#128308; Operation is CLOSED for the weekend";
+        statusEl.innerHTML = "&#10060; Operation is CLOSED for the weekend";
         statusEl.className = "closed";
         countdownEl.textContent = `Reopening on Monday: ${hrs(nextDiff)}h ${mins(nextDiff)}m ${secs(nextDiff)}s`;
         return;
       }
-    }
 
     updateStoreStatus();
     setInterval(updateStoreStatus, 1000);
