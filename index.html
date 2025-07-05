@@ -15,18 +15,15 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       text-align: center;
     }
-
     #store-status {
       font-size: 22px;
       font-weight: bold;
       margin-bottom: 10px;
     }
-
     #countdown {
       font-size: 16px;
       color: #666;
     }
-
     .open { color: #28a745; }
     .closed { color: #dc3545; }
     .soon { color: #ffc107; }
@@ -54,7 +51,7 @@
         return `${h}h ${m}m ${s}s`;
       };
 
-      // Sunday
+      // Sunday - Closed All Day
       if (day === 0) {
         const nextOpen = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 8, 0).getTime();
         statusEl.textContent = "❌ Closed today – Sunday (No operation)";
@@ -63,7 +60,7 @@
         return;
       }
 
-      // Saturday
+      // Saturday Logic
       if (day === 6) {
         const open = time(8, 0);
         const cutoff = time(11, 0);
@@ -80,11 +77,11 @@
           statusEl.className = "open";
           countdownEl.textContent = "Cut-off at 11:00 AM in: " + toTime(cutoff - msNow);
         } else if (msNow < limited) {
-          statusEl.textContent = "⚠️ Cut-off period – Limited acceptance";
+          statusEl.textContent = "⚠️ Cut-off – Limited acceptance (11:00–11:30 AM)";
           statusEl.className = "soon";
           countdownEl.textContent = "Closing soon in: " + toTime(limited - msNow);
         } else if (msNow < closed) {
-          statusEl.textContent = "❌ Closed – After cut-off (11:31–12:00 NN)";
+          statusEl.textContent = "⛔ Closed – After cut-off (11:31–12:00 NN)";
           statusEl.className = "closed";
           countdownEl.textContent = "Weekend close in: " + toTime(closed - msNow);
         } else {
@@ -95,7 +92,7 @@
         return;
       }
 
-      // Monday–Friday
+      // Monday–Friday Logic
       const openAM = time(8, 0);
       const cutoffAM = time(11, 0);
       const lunchStart = time(12, 1);
